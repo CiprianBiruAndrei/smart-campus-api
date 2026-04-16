@@ -230,3 +230,9 @@ logging, rather than manually inserting Logger.info() statements inside every si
 source method?
 
 JAX-RS filters are better for logging because logging is a cross-cutting concern that applies to many endpoints. A filter allows the logging logic to be written once and applied automatically to every request and response. This avoids repeating logging code in every resource method, keeps the resource classes cleaner and makes the API easier to maintain.
+
+## Author
+
+Ciprian Biru Andrei  W2116333 
+Smart Campus Sensor and Room Management API  
+Coursework
