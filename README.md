@@ -167,7 +167,66 @@ All exception handling errors:
 
 
 
+- Question: In your report, explain the default lifecycle of a JAX-RS Resource class. Is a
+new instance instantiated for every incoming request, or does the runtime treat it as a
+singleton? Elaborate on how this architectural decision impacts the way you manage and
+synchronize your in-memory data structures (maps/lists) to prevent data loss or race con-
+ditions.
 
+JAX-RS resource classes are usually request-scoped meaning for each incoming HTTP request a new instance is created. This is better than a singleton because request=specific data is not shared between clients. However for this coursework all the data is stored in sharing in-memory structures such as hashmaps and arraylist. Even though the resouce itself is per-request the shared collections the shared collections can still be accessed by multiple requests all at the same time.
 
+- Question: Why is the provision of ”Hypermedia” (links and navigation within responses)
+considered a hallmark of advanced RESTful design (HATEOAS)? How does this approach
+benefit client developers compared to static documentation?
 
+Hypermedia is important in REST because it allows the server to provide links to related resources inside responses. This means that clients can find the API dynamically instead of relying on static documentations or premade urls. In this API the discovery endpoint returns links to the main collections, such as rooms and sensors which makes it must easier to use but also making the structure easy changeable later but also easier to maintain.
 
+- Question: When returning a list of rooms, what are the implications of returning only
+IDs versus returning the full room objects? Consider network bandwidth and client side
+processing.
+
+Returning only IDS reduces the overall bandwith, but the client then needs extra requests to get the full data. Returning full objects increases the payload size, but it then gives all the information to the client and reduces the number of requests. Therefore, IDS are more efficient for smaller responses for the client. 
+
+- Question: Is the DELETE operation idempotent in your implementation? Provide a detailed
+justification by describing what happens if a client mistakenly sends the exact same DELETE
+request for a room multiple times.
+
+Yes, the DELETE is idemnpotent in the API as sending a DELETE request multiple times will not change the fact that the room has already been deleted. For example, if a room has already been successfully deleted, repeating the DELETE function will not delete it again as it has already been deleted meaning the first call changes the state, while the later Delete functions do not change it again.
+
+- Question: We explicitly use the @Consumes (MediaType.APPLICATION_JSON) annotation on
+the POST method. Explain the technical consequences if a client attempts to send data in
+a different format, such as text/plain or application/xml. How does JAX-RS handle this
+mismatch?
+
+@Consumes(MediaType.APPLICATION_JSON) tells JAX-RS that the endpoint only accepts JSON request bodies. If a client sends another media type such as text/plain or application/xml, JAX-RS will reject the request because the method is not configured to consume that format. This ensures that the endpoint only processes data in the format it expects.
+
+- Question: You implemented this filtering using @QueryParam. Contrast this with an alterna-
+tive design where the type is part of the URL path (e.g., /api/vl/sensors/type/CO2). Why
+is the query parameter approach generally considered superior for filtering and searching
+collections?
+
+Query parameters are better for filtering because they represent optional search criteria applied to a collection. For example, /sensors?type=CO2 clearly means “return sensors, but only those matching this filter.”. Query parameters are therefore more  flexible, more readable and also more aligned with REST conventions for search and filtering.
+
+- Question: Discuss the architectural benefits of the Sub-Resource Locator pattern. How
+does delegating logic to separate classes help manage complexity in large APIs compared
+to defining every nested path (e.g., sensors/{id}/readings/{rid}) in one massive con-
+troller class?
+
+The Sub-Resource Locator pattern improves structure by delegating nested resource logic to a dedicated class. In this coursework, SensorResource handles sensors, while SensorReadingResource handles the readings of a specific sensor. This keeps the code easier to understand. In larger APIs, separating nested resources into different classes reduces complexity, improves maintainability, and makes each class responsible for a smaller and clearer part of the API.
+
+- Question: Why is HTTP 422 often considered more semantically accurate than a standard
+404 when the issue is a missing reference inside a valid JSON payload?
+
+HTTP 422 is better because the request itself is valid and the JSON is correctly structured, but the server does not process it because of invalid meaning inside the payload. In this case, the client sends a valid sensor object, but the roomId refers to a room that does not exist. A 404 normally means the requested URI itself was not found, while 422 better describes a semantic validation failure inside the request data.  
+
+- Question: From a cybersecurity standpoint, explain the risks associated with exposing
+internal Java stack traces to external API consumers. What specific information could an
+attacker gather from such a trace?
+
+Exposing Java stack traces is dangerous because it reveals internal implementation details of the system. An attacker could learn package names, class names, method names. This information can help them understand the principal of the application and identify possible weaknesses or attack points. For this reason, a generic 500 response is safer than exposing raw internal error details.
+
+- Question: Why is it advantageous to use JAX-RS filters for cross-cutting concerns like
+logging, rather than manually inserting Logger.info() statements inside every single re-
+source method?
+
+JAX-RS filters are better for logging because logging is a cross-cutting concern that applies to many endpoints. A filter allows the logging logic to be written once and applied automatically to every request and response. This avoids repeating logging code in every resource method, keeps the resource classes cleaner and makes the API easier to maintain.
